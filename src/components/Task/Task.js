@@ -21,7 +21,6 @@ export default class Task extends Component {
           <button className="icon icon-edit"></button>
           <button className="icon icon-destroy" onClick={onDelete}></button>
         </div>
-        {task.editing && <input type="text" className="edit" value={task.description} />}
       </li>
     );
   }
