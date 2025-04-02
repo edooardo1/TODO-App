@@ -1,16 +1,29 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { formatDistanceToNow } from 'date-fns';
 import TaskList from '../TaskList/TaskList';
 import NewTaskForm from '../NewTaskForm/NewTaskForm';
 import Footer from '../Footer/Footer';
 import './app.css';
 
 export default class App extends Component {
+  static defaultProps = {
+    initialTasks: []
+  };
+
+  static propTypes = {
+    initialTasks: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        description: PropTypes.string.isRequired,
+        completed: PropTypes.bool.isRequired,
+        created: PropTypes.instanceOf(Date)
+      })
+    )
+  };
+
   state = {
-    tasks: [
-      { id: 1, description: 'Completed task', completed: true, created: '17 seconds ago' },
-      { id: 2, description: 'Editing task', completed: false, created: '5 minutes ago' },
-      { id: 3, description: 'Active task', completed: false, created: '5 minutes ago' },
-    ],
+    tasks: this.props.initialTasks,
     filter: 'all'
   };
 
@@ -29,7 +42,7 @@ export default class App extends Component {
       id: Date.now(),
       description,
       completed: false,
-      created: 'just now'
+      created: new Date()
     };
     
     this.setState(prev => ({
@@ -61,7 +74,10 @@ export default class App extends Component {
 
   render() {
     const { filter } = this.state;
-    const filteredTasks = this.getFilteredTasks();
+    const filteredTasks = this.getFilteredTasks().map(task => ({
+      ...task,
+      createdText: formatDistanceToNow(task.created, { addSuffix: true })
+    }));
     const activeTasksCount = this.getActiveTasksCount();
 
     return (
