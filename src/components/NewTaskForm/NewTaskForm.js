@@ -1,31 +1,31 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import './NewTaskForm.css';
+import PropTypes from 'prop-types'
+import React, { Component } from 'react'
+import './NewTaskForm.css'
 
 export default class NewTaskForm extends Component {
   static defaultProps = {
-    onAddTask: () => {}
-  };
+    onAddTask: () => {},
+  }
 
   static propTypes = {
-    onAddTask: PropTypes.func.isRequired
-  };
+    onAddTask: PropTypes.func.isRequired,
+  }
 
   state = {
-    description: ''
-  };
+    description: '',
+  }
 
   handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (this.state.description.trim()) {
-      this.props.onAddTask(this.state.description);
-      this.setState({ description: '' });
+      this.props.onAddTask(this.state.description)
+      this.setState({ description: '' })
     }
-  };
+  }
 
   handleChange = (e) => {
-    this.setState({ description: e.target.value });
-  };
+    this.setState({ description: e.target.value })
+  }
 
   render() {
     return (
@@ -33,11 +33,10 @@ export default class NewTaskForm extends Component {
         <input
           className="new-todo"
           placeholder="What needs to be done?"
-          autoFocus
           value={this.state.description}
           onChange={this.handleChange}
         />
       </form>
-    );
+    )
   }
 }

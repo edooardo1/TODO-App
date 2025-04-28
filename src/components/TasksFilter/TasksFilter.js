@@ -1,41 +1,35 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import './TasksFilter.css';
+import PropTypes from 'prop-types'
+import React, { Component } from 'react'
+import './TasksFilter.css'
 
 export default class TasksFilter extends Component {
   static defaultProps = {
     currentFilter: 'all',
-    onChangeFilter: () => {}
-  };
+    onChangeFilter: () => {},
+  }
 
   static propTypes = {
     currentFilter: PropTypes.oneOf(['all', 'active', 'completed']).isRequired,
-    onChangeFilter: PropTypes.func.isRequired
-  };
+    onChangeFilter: PropTypes.func.isRequired,
+  }
 
   render() {
-    const { currentFilter, onChangeFilter } = this.props;
-    
+    const { currentFilter, onChangeFilter } = this.props
+
     return (
       <ul className="filters">
         <li>
-          <button 
-            className={currentFilter === 'all' ? 'selected' : ''}
-            onClick={() => onChangeFilter('all')}
-          >
+          <button className={currentFilter === 'all' ? 'selected' : ''} onClick={() => onChangeFilter('all')}>
             All
           </button>
         </li>
         <li>
-          <button 
-            className={currentFilter === 'active' ? 'selected' : ''}
-            onClick={() => onChangeFilter('active')}
-          >
+          <button className={currentFilter === 'active' ? 'selected' : ''} onClick={() => onChangeFilter('active')}>
             Active
           </button>
         </li>
         <li>
-          <button 
+          <button
             className={currentFilter === 'completed' ? 'selected' : ''}
             onClick={() => onChangeFilter('completed')}
           >
@@ -43,6 +37,6 @@ export default class TasksFilter extends Component {
           </button>
         </li>
       </ul>
-    );
+    )
   }
 }

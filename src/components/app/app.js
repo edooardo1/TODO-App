@@ -1,15 +1,16 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { formatDistanceToNow } from 'date-fns';
-import TaskList from '../TaskList/TaskList';
-import NewTaskForm from '../NewTaskForm/NewTaskForm';
-import Footer from '../Footer/Footer';
-import './app.css';
+import { formatDistanceToNow } from 'date-fns'
+import PropTypes from 'prop-types'
+import React, { Component } from 'react'
+
+import Footer from '../Footer/Footer'
+import NewTaskForm from '../NewTaskForm/NewTaskForm'
+import TaskList from '../TaskList/TaskList'
+import './app.css'
 
 export default class App extends Component {
   static defaultProps = {
-    initialTasks: []
-  };
+    initialTasks: [],
+  }
 
   static propTypes = {
     initialTasks: PropTypes.arrayOf(
@@ -17,68 +18,146 @@ export default class App extends Component {
         id: PropTypes.number.isRequired,
         description: PropTypes.string.isRequired,
         completed: PropTypes.bool.isRequired,
-        created: PropTypes.instanceOf(Date)
+        created: PropTypes.instanceOf(Date),
       })
-    )
-  };
+    ),
+  }
 
   state = {
-    tasks: this.props.initialTasks,
-    filter: 'all'
-  };
+    tasks: this.props.initialTasks.map((task) => ({
+      ...task,
+      timeSpent: 0,
+      isTimerRunning: false,
+      lastStartTime: null,
+    })),
+    filter: 'all',
+  }
 
-  toggleTaskStatus = taskId => this.setState(prev => ({
-    tasks: prev.tasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    )
-  }));
+  componentDidMount() {
+    this.timerID = setInterval(this.updateTimers, 1000)
+  }
 
-  deleteTask = taskId => this.setState(prev => ({
-    tasks: prev.tasks.filter(task => task.id !== taskId)
-  }));
+  componentWillUnmount() {
+    clearInterval(this.timerID)
+  }
 
-  addTask = description => {
+  updateTimers = () => {
+    this.setState((prevState) => ({
+      tasks: prevState.tasks.map((task) => {
+        if (task.isTimerRunning && task.lastStartTime) {
+          const now = Date.now()
+          const delta = Math.floor((now - task.lastStartTime) / 1000)
+          return {
+            ...task,
+            timeSpent: task.baseTimeSpent + delta,
+          }
+        }
+        return task
+      }),
+    }))
+  }
+
+  toggleTaskStatus = (taskId) =>
+    this.setState((prev) => ({
+      tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)),
+    }))
+
+  deleteTask = (taskId) =>
+    this.setState((prev) => ({
+      tasks: prev.tasks.filter((task) => task.id !== taskId),
+    }))
+
+  addTask = (description) => {
     const newTask = {
       id: Date.now(),
       description,
       completed: false,
-      created: new Date()
-    };
-    
-    this.setState(prev => ({
-      tasks: [...prev.tasks, newTask]
-    }));
-  };
+      created: new Date(),
+      editing: false,
+      timeSpent: 0,
+      isTimerRunning: false,
+      lastStartTime: null,
+    }
 
-  changeFilter = filter => this.setState({ filter });
+    this.setState((prev) => ({
+      tasks: [...prev.tasks, newTask],
+    }))
+  }
 
-  clearCompleted = () => this.setState(prev => ({
-    tasks: prev.tasks.filter(task => !task.completed)
-  }));
+  editTask = (taskId, newDescription) => {
+    this.setState((prev) => ({
+      tasks: prev.tasks.map((task) =>
+        task.id === taskId ? { ...task, description: newDescription, editing: false } : task
+      ),
+    }))
+  }
+
+  toggleEditMode = (taskId) => {
+    this.setState((prev) => ({
+      tasks: prev.tasks.map((task) =>
+        task.id === taskId ? { ...task, editing: !task.editing } : { ...task, editing: false }
+      ),
+    }))
+  }
+
+  changeFilter = (filter) => this.setState({ filter })
+
+  clearCompleted = () =>
+    this.setState((prev) => ({
+      tasks: prev.tasks.filter((task) => !task.completed),
+    }))
 
   getFilteredTasks = () => {
-    const { tasks, filter } = this.state;
+    const { tasks, filter } = this.state
     switch (filter) {
       case 'active':
-        return tasks.filter(task => !task.completed);
+        return tasks.filter((task) => !task.completed)
       case 'completed':
-        return tasks.filter(task => task.completed);
+        return tasks.filter((task) => task.completed)
       default:
-        return tasks;
+        return tasks
     }
-  };
+  }
 
-  getActiveTasksCount = () => {
-    return this.state.tasks.filter(task => !task.completed).length;
-  };
+  getActiveTasksCount = () => this.state.tasks.filter((task) => !task.completed).length
+
+  startTimer = (taskId) => {
+    this.setState((prev) => ({
+      tasks: prev.tasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              isTimerRunning: true,
+              lastStartTime: Date.now(),
+              baseTimeSpent: task.timeSpent,
+            }
+          : task
+      ),
+    }))
+  }
+
+  stopTimer = (taskId) => {
+    this.setState((prev) => ({
+      tasks: prev.tasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              isTimerRunning: false,
+              lastStartTime: null,
+              timeSpent: task.timeSpent,
+            }
+          : task
+      ),
+    }))
+  }
 
   render() {
-    const { filter } = this.state;
-    const filteredTasks = this.getFilteredTasks().map(task => ({
+    const { filter } = this.state
+    const filteredTasks = this.getFilteredTasks().map((task) => ({
       ...task,
-      createdText: formatDistanceToNow(task.created, { addSuffix: true })
-    }));
-    const activeTasksCount = this.getActiveTasksCount();
+      createdText: formatDistanceToNow(task.created, { addSuffix: true }),
+    }))
+    const activeTasksCount = this.getActiveTasksCount()
 
     return (
       <section className="todoapp">
@@ -87,19 +166,23 @@ export default class App extends Component {
           <NewTaskForm onAddTask={this.addTask} />
         </header>
         <section className="main">
-          <TaskList 
-            tasks={filteredTasks} 
+          <TaskList
+            tasks={filteredTasks}
             onToggleTask={this.toggleTaskStatus}
             onDeleteTask={this.deleteTask}
+            onEditTask={this.editTask}
+            onToggleEdit={this.toggleEditMode}
+            onStartTimer={this.startTimer}
+            onStopTimer={this.stopTimer}
           />
         </section>
-        <Footer 
+        <Footer
           activeTasksCount={activeTasksCount}
           currentFilter={filter}
           onChangeFilter={this.changeFilter}
           onClearCompleted={this.clearCompleted}
         />
       </section>
-    );
+    )
   }
 }
