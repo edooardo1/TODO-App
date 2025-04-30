@@ -7,30 +7,18 @@ import NewTaskForm from '../NewTaskForm/NewTaskForm'
 import TaskList from '../TaskList/TaskList'
 import './app.css'
 
-export default class App extends Component {
-  static defaultProps = {
-    initialTasks: [],
-  }
-
-  static propTypes = {
-    initialTasks: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        description: PropTypes.string.isRequired,
-        completed: PropTypes.bool.isRequired,
-        created: PropTypes.instanceOf(Date),
-      })
-    ),
-  }
-
-  state = {
-    tasks: this.props.initialTasks.map((task) => ({
-      ...task,
-      timeSpent: 0,
-      isTimerRunning: false,
-      lastStartTime: null,
-    })),
-    filter: 'all',
+class App extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      tasks: props.initialTasks.map((task) => ({
+        ...task,
+        timeSpent: 0,
+        isTimerRunning: false,
+        lastStartTime: null,
+      })),
+      filter: 'all',
+    }
   }
 
   componentDidMount() {
@@ -57,15 +45,17 @@ export default class App extends Component {
     }))
   }
 
-  toggleTaskStatus = (taskId) =>
+  toggleTaskStatus = (taskId) => {
     this.setState((prev) => ({
       tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)),
     }))
+  }
 
-  deleteTask = (taskId) =>
+  deleteTask = (taskId) => {
     this.setState((prev) => ({
       tasks: prev.tasks.filter((task) => task.id !== taskId),
     }))
+  }
 
   addTask = (description) => {
     const newTask = {
@@ -100,12 +90,15 @@ export default class App extends Component {
     }))
   }
 
-  changeFilter = (filter) => this.setState({ filter })
+  changeFilter = (filter) => {
+    this.setState({ filter })
+  }
 
-  clearCompleted = () =>
+  clearCompleted = () => {
     this.setState((prev) => ({
       tasks: prev.tasks.filter((task) => !task.completed),
     }))
+  }
 
   getFilteredTasks = () => {
     const { tasks, filter } = this.state
@@ -119,7 +112,10 @@ export default class App extends Component {
     }
   }
 
-  getActiveTasksCount = () => this.state.tasks.filter((task) => !task.completed).length
+  getActiveTasksCount = () => {
+    const { tasks } = this.state
+    return tasks.filter((task) => !task.completed).length
+  }
 
   startTimer = (taskId) => {
     this.setState((prev) => ({
@@ -186,3 +182,20 @@ export default class App extends Component {
     )
   }
 }
+
+App.propTypes = {
+  initialTasks: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      description: PropTypes.string.isRequired,
+      completed: PropTypes.bool.isRequired,
+      created: PropTypes.instanceOf(Date),
+    })
+  ),
+}
+
+App.defaultProps = {
+  initialTasks: [],
+}
+
+export default App

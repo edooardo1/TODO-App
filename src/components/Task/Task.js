@@ -9,37 +9,19 @@ function formatTime(seconds) {
   return `${h}h ${m}m ${s}s`
 }
 
-export default class Task extends Component {
-  static defaultProps = {
-    task: {},
-    onToggle: () => {},
-    onDelete: () => {},
-    onEdit: () => {},
-    onToggleEdit: () => {},
-    onStartTimer: () => {},
-    onStopTimer: () => {},
+class Task extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      editText: props.task.description,
+    }
   }
 
-  static propTypes = {
-    task: PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      description: PropTypes.string.isRequired,
-      completed: PropTypes.bool.isRequired,
-      createdText: PropTypes.string.isRequired,
-      editing: PropTypes.bool.isRequired,
-      timeSpent: PropTypes.number,
-      isTimerRunning: PropTypes.bool,
-    }).isRequired,
-    onToggle: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired,
-    onEdit: PropTypes.func.isRequired,
-    onToggleEdit: PropTypes.func.isRequired,
-    onStartTimer: PropTypes.func.isRequired,
-    onStopTimer: PropTypes.func.isRequired,
-  }
-
-  state = {
-    editText: this.props.task.description,
+  componentDidUpdate(prevProps) {
+    const { task } = this.props
+    if (task.editing && !prevProps.task.editing) {
+      this.setState({ editText: task.description })
+    }
   }
 
   handleEditChange = (e) => {
@@ -48,20 +30,17 @@ export default class Task extends Component {
 
   handleEditSubmit = (e) => {
     e.preventDefault()
-    if (this.state.editText.trim()) {
-      this.props.onEdit(this.props.task.id, this.state.editText)
+    const { editText } = this.state
+    const { task, onEdit } = this.props
+    if (editText.trim()) {
+      onEdit(task.id, editText)
     }
   }
 
   handleEditKeyDown = (e) => {
+    const { task, onToggleEdit } = this.props
     if (e.key === 'Escape') {
-      this.props.onToggleEdit(this.props.task.id)
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.task.editing && !prevProps.task.editing) {
-      this.setState({ editText: this.props.task.description })
+      onToggleEdit(task.id)
     }
   }
 
@@ -83,33 +62,71 @@ export default class Task extends Component {
         <div className="view">
           <input className="toggle" type="checkbox" checked={task.completed} onChange={onToggle} />
 
-          <label className="task-info">
+          <div className="task-info" id={`label-${task.id}`}>
+            {' '}
+            {}
             <span className="description">{task.description}</span>
             <span className="created">{task.createdText}</span>
-          </label>
+          </div>
 
           <span className="timer">{formatTime(task.timeSpent)}</span>
 
-          <button className="icon icon-timer" onClick={this.handleTimerClick}>
+          <button
+            className="icon icon-timer"
+            onClick={this.handleTimerClick}
+            type="button"
+            aria-label={task.isTimerRunning ? 'Stop timer' : 'Start timer'}
+          >
             {task.isTimerRunning ? 'Stop' : 'Start'}
           </button>
-          <button className="icon icon-edit" onClick={() => onToggleEdit(task.id)} disabled={task.completed} />
-          <button className="icon icon-destroy" onClick={onDelete} />
+          <button
+            className="icon icon-edit"
+            onClick={() => onToggleEdit(task.id)}
+            disabled={task.completed}
+            type="button"
+            aria-label="Edit task"
+          />
+          <button className="icon icon-destroy" onClick={onDelete} type="button" aria-label="Delete task" />
         </div>
 
         {task.editing && (
           <form onSubmit={this.handleEditSubmit}>
-            <input
-              type="text"
-              className="edit"
-              value={editText}
-              onChange={this.handleEditChange}
-              onBlur={this.handleEditSubmit}
-              onKeyDown={this.handleEditKeyDown}
-            />
+            <label htmlFor={`edit-${task.id}`} className="visually-hidden">
+              <span>Edit task input</span>
+              <input
+                id={`edit-${task.id}`}
+                type="text"
+                className="edit"
+                value={editText}
+                onChange={this.handleEditChange}
+                onBlur={this.handleEditSubmit}
+                onKeyDown={this.handleEditKeyDown}
+                aria-labelledby={`label-${task.id}`}
+              />
+            </label>
           </form>
         )}
       </li>
     )
   }
 }
+
+Task.propTypes = {
+  task: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    description: PropTypes.string.isRequired,
+    completed: PropTypes.bool.isRequired,
+    createdText: PropTypes.string.isRequired,
+    editing: PropTypes.bool.isRequired,
+    timeSpent: PropTypes.number,
+    isTimerRunning: PropTypes.bool,
+  }).isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onToggleEdit: PropTypes.func.isRequired,
+  onStartTimer: PropTypes.func.isRequired,
+  onStopTimer: PropTypes.func.isRequired,
+}
+
+export default Task

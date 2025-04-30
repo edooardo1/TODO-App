@@ -2,23 +2,20 @@ import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 import './NewTaskForm.css'
 
-export default class NewTaskForm extends Component {
-  static defaultProps = {
-    onAddTask: () => {},
-  }
-
-  static propTypes = {
-    onAddTask: PropTypes.func.isRequired,
-  }
-
-  state = {
-    description: '',
+class NewTaskForm extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      description: '',
+    }
   }
 
   handleSubmit = (e) => {
     e.preventDefault()
-    if (this.state.description.trim()) {
-      this.props.onAddTask(this.state.description)
+    const { description } = this.state
+    const { onAddTask } = this.props
+    if (description.trim()) {
+      onAddTask(description)
       this.setState({ description: '' })
     }
   }
@@ -28,15 +25,23 @@ export default class NewTaskForm extends Component {
   }
 
   render() {
+    const { description } = this.state
+
     return (
       <form onSubmit={this.handleSubmit}>
         <input
           className="new-todo"
           placeholder="What needs to be done?"
-          value={this.state.description}
+          value={description}
           onChange={this.handleChange}
         />
       </form>
     )
   }
 }
+
+NewTaskForm.propTypes = {
+  onAddTask: PropTypes.func.isRequired,
+}
+
+export default NewTaskForm
