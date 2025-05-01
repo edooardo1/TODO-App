@@ -9,11 +9,32 @@ function formatTime(seconds) {
   return `${h}h ${m}m ${s}s`
 }
 
-class Task extends Component {
+const propTypes = {
+  task: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    description: PropTypes.string.isRequired,
+    completed: PropTypes.bool.isRequired,
+    createdText: PropTypes.string.isRequired,
+    editing: PropTypes.bool.isRequired,
+    timeSpent: PropTypes.number,
+    isTimerRunning: PropTypes.bool,
+  }).isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onToggleEdit: PropTypes.func.isRequired,
+  onStartTimer: PropTypes.func.isRequired,
+  onStopTimer: PropTypes.func.isRequired,
+}
+
+export default class Task extends Component {
+  static propTypes = propTypes
+
   constructor(props) {
     super(props)
+    const { task } = props
     this.state = {
-      editText: props.task.description,
+      editText: task.description,
     }
   }
 
@@ -30,15 +51,15 @@ class Task extends Component {
 
   handleEditSubmit = (e) => {
     e.preventDefault()
+    const { onEdit, task } = this.props
     const { editText } = this.state
-    const { task, onEdit } = this.props
     if (editText.trim()) {
       onEdit(task.id, editText)
     }
   }
 
   handleEditKeyDown = (e) => {
-    const { task, onToggleEdit } = this.props
+    const { onToggleEdit, task } = this.props
     if (e.key === 'Escape') {
       onToggleEdit(task.id)
     }
@@ -60,73 +81,35 @@ class Task extends Component {
     return (
       <li className={`${task.completed ? 'completed' : ''} ${task.editing ? 'editing' : ''}`}>
         <div className="view">
-          <input className="toggle" type="checkbox" checked={task.completed} onChange={onToggle} />
+          <input id={`toggle-${task.id}`} className="toggle" type="checkbox" checked={task.completed} onChange={onToggle} />
 
-          <div className="task-info" id={`label-${task.id}`}>
-            {' '}
-            {}
+          <label htmlFor={`toggle-${task.id}`} className="task-info">
             <span className="description">{task.description}</span>
             <span className="created">{task.createdText}</span>
-          </div>
+          </label>
 
           <span className="timer">{formatTime(task.timeSpent)}</span>
 
-          <button
-            className="icon icon-timer"
-            onClick={this.handleTimerClick}
-            type="button"
-            aria-label={task.isTimerRunning ? 'Stop timer' : 'Start timer'}
-          >
+          <button className="icon icon-timer" type="button" onClick={this.handleTimerClick} aria-label="Toggle timer">
             {task.isTimerRunning ? 'Stop' : 'Start'}
           </button>
-          <button
-            className="icon icon-edit"
-            onClick={() => onToggleEdit(task.id)}
-            disabled={task.completed}
-            type="button"
-            aria-label="Edit task"
-          />
-          <button className="icon icon-destroy" onClick={onDelete} type="button" aria-label="Delete task" />
+          <button className="icon icon-edit" type="button" onClick={() => onToggleEdit(task.id)} disabled={task.completed} aria-label="Edit task" />
+          <button className="icon icon-destroy" type="button" onClick={onDelete} aria-label="Delete task" />
         </div>
 
         {task.editing && (
           <form onSubmit={this.handleEditSubmit}>
-            <label htmlFor={`edit-${task.id}`} className="visually-hidden">
-              <span>Edit task input</span>
-              <input
-                id={`edit-${task.id}`}
-                type="text"
-                className="edit"
-                value={editText}
-                onChange={this.handleEditChange}
-                onBlur={this.handleEditSubmit}
-                onKeyDown={this.handleEditKeyDown}
-                aria-labelledby={`label-${task.id}`}
-              />
-            </label>
+            <input
+              type="text"
+              className="edit"
+              value={editText}
+              onChange={this.handleEditChange}
+              onBlur={this.handleEditSubmit}
+              onKeyDown={this.handleEditKeyDown}
+            />
           </form>
         )}
       </li>
     )
   }
 }
-
-Task.propTypes = {
-  task: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    description: PropTypes.string.isRequired,
-    completed: PropTypes.bool.isRequired,
-    createdText: PropTypes.string.isRequired,
-    editing: PropTypes.bool.isRequired,
-    timeSpent: PropTypes.number,
-    isTimerRunning: PropTypes.bool,
-  }).isRequired,
-  onToggle: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onToggleEdit: PropTypes.func.isRequired,
-  onStartTimer: PropTypes.func.isRequired,
-  onStopTimer: PropTypes.func.isRequired,
-}
-
-export default Task
