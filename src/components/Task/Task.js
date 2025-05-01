@@ -9,32 +9,11 @@ function formatTime(seconds) {
   return `${h}h ${m}m ${s}s`
 }
 
-const propTypes = {
-  task: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    description: PropTypes.string.isRequired,
-    completed: PropTypes.bool.isRequired,
-    createdText: PropTypes.string.isRequired,
-    editing: PropTypes.bool.isRequired,
-    timeSpent: PropTypes.number,
-    isTimerRunning: PropTypes.bool,
-  }).isRequired,
-  onToggle: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onToggleEdit: PropTypes.func.isRequired,
-  onStartTimer: PropTypes.func.isRequired,
-  onStopTimer: PropTypes.func.isRequired,
-}
-
 export default class Task extends Component {
-  static propTypes = propTypes
-
   constructor(props) {
     super(props)
-    const { task } = props
     this.state = {
-      editText: task.description,
+      editText: props.task.description,
     }
   }
 
@@ -81,19 +60,36 @@ export default class Task extends Component {
     return (
       <li className={`${task.completed ? 'completed' : ''} ${task.editing ? 'editing' : ''}`}>
         <div className="view">
-          <input id={`toggle-${task.id}`} className="toggle" type="checkbox" checked={task.completed} onChange={onToggle} />
+          <input
+            id={`toggle-${task.id}`}
+            className="toggle"
+            type="checkbox"
+            checked={task.completed}
+            onChange={onToggle}
+          />
 
-          <label htmlFor={`toggle-${task.id}`} className="task-info">
+          <label htmlFor={`toggle-${task.id}`}>
             <span className="description">{task.description}</span>
             <span className="created">{task.createdText}</span>
           </label>
 
           <span className="timer">{formatTime(task.timeSpent)}</span>
 
-          <button className="icon icon-timer" type="button" onClick={this.handleTimerClick} aria-label="Toggle timer">
+          <button
+            className="icon icon-timer"
+            type="button"
+            onClick={this.handleTimerClick}
+            aria-label={task.isTimerRunning ? 'Stop timer' : 'Start timer'}
+          >
             {task.isTimerRunning ? 'Stop' : 'Start'}
           </button>
-          <button className="icon icon-edit" type="button" onClick={() => onToggleEdit(task.id)} disabled={task.completed} aria-label="Edit task" />
+          <button
+            className="icon icon-edit"
+            type="button"
+            onClick={() => onToggleEdit(task.id)}
+            disabled={task.completed}
+            aria-label="Edit task"
+          />
           <button className="icon icon-destroy" type="button" onClick={onDelete} aria-label="Delete task" />
         </div>
 
@@ -112,4 +108,22 @@ export default class Task extends Component {
       </li>
     )
   }
+}
+
+Task.propTypes = {
+  task: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    description: PropTypes.string.isRequired,
+    completed: PropTypes.bool.isRequired,
+    createdText: PropTypes.string.isRequired,
+    editing: PropTypes.bool.isRequired,
+    timeSpent: PropTypes.number,
+    isTimerRunning: PropTypes.bool,
+  }).isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onToggleEdit: PropTypes.func.isRequired,
+  onStartTimer: PropTypes.func.isRequired,
+  onStopTimer: PropTypes.func.isRequired,
 }
