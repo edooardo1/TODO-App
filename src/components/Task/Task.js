@@ -3,10 +3,9 @@ import React, { Component } from 'react'
 import './Task.css'
 
 function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
+  const m = Math.floor(seconds / 60)
   const s = seconds % 60
-  return `${h}h ${m}m ${s}s`
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
 export default class Task extends Component {
@@ -69,20 +68,21 @@ export default class Task extends Component {
           />
 
           <label htmlFor={`toggle-${task.id}`}>
-            <span className="description">{task.description}</span>
-            <span className="created">{task.createdText}</span>
+            <div className="task-text">
+              <span className="description">{task.description}</span>
+              <span className="timer">{formatTime(task.remainingTime)}</span>
+              <button
+                className="icon icon-timer"
+                type="button"
+                onClick={this.handleTimerClick}
+                aria-label={task.isTimerRunning ? 'Pause timer' : 'Start timer'}
+              >
+                {task.isTimerRunning ? '⏸' : '▶'}
+              </button>
+              <span className="created">{task.createdText}</span>
+            </div>
           </label>
 
-          <span className="timer">{formatTime(task.timeSpent)}</span>
-
-          <button
-            className="icon icon-timer"
-            type="button"
-            onClick={this.handleTimerClick}
-            aria-label={task.isTimerRunning ? 'Stop timer' : 'Start timer'}
-          >
-            {task.isTimerRunning ? 'Stop' : 'Start'}
-          </button>
           <button
             className="icon icon-edit"
             type="button"
@@ -117,8 +117,8 @@ Task.propTypes = {
     completed: PropTypes.bool.isRequired,
     createdText: PropTypes.string.isRequired,
     editing: PropTypes.bool.isRequired,
-    timeSpent: PropTypes.number,
-    isTimerRunning: PropTypes.bool,
+    remainingTime: PropTypes.number.isRequired,
+    isTimerRunning: PropTypes.bool.isRequired,
   }).isRequired,
   onToggle: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,

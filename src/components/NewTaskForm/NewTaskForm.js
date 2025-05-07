@@ -7,33 +7,51 @@ class NewTaskForm extends Component {
     super(props)
     this.state = {
       description: '',
+      minutes: '',
+      seconds: '',
     }
   }
 
   handleSubmit = (e) => {
     e.preventDefault()
-    const { description } = this.state
+    const { description, minutes, seconds } = this.state
     const { onAddTask } = this.props
-    if (description.trim()) {
-      onAddTask(description)
-      this.setState({ description: '' })
+
+    const duration = parseInt(minutes || '0', 10) * 60 + parseInt(seconds || '0', 10)
+
+    if (description.trim() && duration > 0) {
+      onAddTask(description, duration)
+      this.setState({ description: '', minutes: '', seconds: '' })
     }
   }
 
-  handleChange = (e) => {
-    this.setState({ description: e.target.value })
-  }
-
   render() {
-    const { description } = this.state
+    const { description, minutes, seconds } = this.state
 
     return (
-      <form onSubmit={this.handleSubmit}>
+      <form className="new-task-form" onSubmit={this.handleSubmit}>
         <input
           className="new-todo"
           placeholder="What needs to be done?"
           value={description}
-          onChange={this.handleChange}
+          onChange={(e) => this.setState({ description: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') this.handleSubmit(e)
+          }}
+        />
+        <input
+          type="number"
+          className="time-input"
+          placeholder="min"
+          value={minutes}
+          onChange={(e) => this.setState({ minutes: e.target.value })}
+        />
+        <input
+          type="number"
+          className="time-input"
+          placeholder="sec"
+          value={seconds}
+          onChange={(e) => this.setState({ seconds: e.target.value })}
         />
       </form>
     )

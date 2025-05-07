@@ -1,5 +1,4 @@
 import { formatDistanceToNow } from 'date-fns'
-import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 
 import Footer from '../Footer/Footer'
@@ -11,12 +10,7 @@ class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      tasks: props.initialTasks.map((task) => ({
-        ...task,
-        timeSpent: 0,
-        isTimerRunning: false,
-        lastStartTime: null,
-      })),
+      tasks: [],
       filter: 'all',
     }
   }
@@ -32,16 +26,31 @@ class App extends Component {
   updateTimers = () => {
     this.setState((prevState) => ({
       tasks: prevState.tasks.map((task) => {
-        if (task.isTimerRunning && task.lastStartTime) {
-          const now = Date.now()
-          const delta = Math.floor((now - task.lastStartTime) / 1000)
+        if (task.isTimerRunning && task.remainingTime > 0) {
           return {
             ...task,
-            timeSpent: task.baseTimeSpent + delta,
+            remainingTime: task.remainingTime - 1,
+            isTimerRunning: task.remainingTime - 1 > 0,
           }
         }
         return task
       }),
+    }))
+  }
+
+  addTask = (description, duration) => {
+    const newTask = {
+      id: Date.now(),
+      description,
+      completed: false,
+      created: new Date(),
+      editing: false,
+      remainingTime: duration,
+      isTimerRunning: false,
+    }
+
+    this.setState((prev) => ({
+      tasks: [...prev.tasks, newTask],
     }))
   }
 
@@ -54,23 +63,6 @@ class App extends Component {
   deleteTask = (taskId) => {
     this.setState((prev) => ({
       tasks: prev.tasks.filter((task) => task.id !== taskId),
-    }))
-  }
-
-  addTask = (description) => {
-    const newTask = {
-      id: Date.now(),
-      description,
-      completed: false,
-      created: new Date(),
-      editing: false,
-      timeSpent: 0,
-      isTimerRunning: false,
-      lastStartTime: null,
-    }
-
-    this.setState((prev) => ({
-      tasks: [...prev.tasks, newTask],
     }))
   }
 
@@ -113,37 +105,18 @@ class App extends Component {
   }
 
   getActiveTasksCount = () => {
-    const { tasks } = this.state
-    return tasks.filter((task) => !task.completed).length
+    return this.state.tasks.filter((task) => !task.completed).length
   }
 
   startTimer = (taskId) => {
     this.setState((prev) => ({
-      tasks: prev.tasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              isTimerRunning: true,
-              lastStartTime: Date.now(),
-              baseTimeSpent: task.timeSpent,
-            }
-          : task
-      ),
+      tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, isTimerRunning: true } : task)),
     }))
   }
 
   stopTimer = (taskId) => {
     this.setState((prev) => ({
-      tasks: prev.tasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              isTimerRunning: false,
-              lastStartTime: null,
-              timeSpent: task.timeSpent,
-            }
-          : task
-      ),
+      tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, isTimerRunning: false } : task)),
     }))
   }
 
@@ -181,21 +154,6 @@ class App extends Component {
       </section>
     )
   }
-}
-
-App.propTypes = {
-  initialTasks: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      description: PropTypes.string.isRequired,
-      completed: PropTypes.bool.isRequired,
-      created: PropTypes.instanceOf(Date),
-    })
-  ),
-}
-
-App.defaultProps = {
-  initialTasks: [],
 }
 
 export default App
