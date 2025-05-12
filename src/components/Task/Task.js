@@ -1,50 +1,33 @@
 import PropTypes from 'prop-types'
-import React, { Component } from 'react'
+import React, { useEffect, useState } from 'react'
 import './Task.css'
 
 function formatTime(seconds) {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
+  const total = Number(seconds)
+  if (Number.isNaN(total) || total < 0) return '00:00'
+
+  const m = Math.floor(total / 60)
+  const s = total % 60
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-export default class Task extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      editText: props.task.description,
+function Task({ task, onToggle, onDelete, onEdit, onToggleEdit, onStartTimer, onStopTimer }) {
+  const [editText, setEditText] = useState(task.description)
+
+  useEffect(() => {
+    if (task.editing) {
+      setEditText(task.description)
     }
-  }
+  }, [task.editing, task.description])
 
-  componentDidUpdate(prevProps) {
-    const { task } = this.props
-    if (task.editing && !prevProps.task.editing) {
-      this.setState({ editText: task.description })
-    }
-  }
-
-  handleEditChange = (e) => {
-    this.setState({ editText: e.target.value })
-  }
-
-  handleEditSubmit = (e) => {
+  const handleEditSubmit = (e) => {
     e.preventDefault()
-    const { onEdit, task } = this.props
-    const { editText } = this.state
     if (editText.trim()) {
       onEdit(task.id, editText)
     }
   }
 
-  handleEditKeyDown = (e) => {
-    const { onToggleEdit, task } = this.props
-    if (e.key === 'Escape') {
-      onToggleEdit(task.id)
-    }
-  }
-
-  handleTimerClick = () => {
-    const { task, onStartTimer, onStopTimer } = this.props
+  const handleTimerClick = () => {
     if (task.isTimerRunning) {
       onStopTimer(task.id)
     } else {
@@ -52,62 +35,58 @@ export default class Task extends Component {
     }
   }
 
-  render() {
-    const { task, onToggle, onDelete, onToggleEdit } = this.props
-    const { editText } = this.state
-
-    return (
-      <li className={`${task.completed ? 'completed' : ''} ${task.editing ? 'editing' : ''}`}>
-        <div className="view">
+  return (
+    <li className={`${task.completed ? 'completed' : ''} ${task.editing ? 'editing' : ''}`}>
+      <div className="view">
+        <input
+          id={`toggle-${task.id}`}
+          className="toggle"
+          type="checkbox"
+          checked={task.completed}
+          onChange={onToggle}
+        />
+        <label htmlFor={`toggle-${task.id}`}>
+          <div className="task-text">
+            <span className="description">{task.description}</span>
+            <span className="timer">{formatTime(task.remainingTime)}</span>
+            <button
+              className="icon icon-timer"
+              type="button"
+              onClick={handleTimerClick}
+              aria-label={task.isTimerRunning ? 'Pause timer' : 'Start timer'}
+            >
+              {task.isTimerRunning ? '⏸' : '▶'}
+            </button>
+            <span className="created">{task.createdText}</span>
+          </div>
+        </label>
+        <button
+          className="icon icon-edit"
+          type="button"
+          onClick={() => onToggleEdit(task.id)}
+          disabled={task.completed}
+          aria-label="Edit task"
+        />
+        <button className="icon icon-destroy" type="button" onClick={onDelete} aria-label="Delete task" />
+      </div>
+      {task.editing && (
+        <form onSubmit={handleEditSubmit}>
           <input
-            id={`toggle-${task.id}`}
-            className="toggle"
-            type="checkbox"
-            checked={task.completed}
-            onChange={onToggle}
+            type="text"
+            className="edit"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onBlur={handleEditSubmit}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                onToggleEdit(task.id)
+              }
+            }}
           />
-
-          <label htmlFor={`toggle-${task.id}`}>
-            <div className="task-text">
-              <span className="description">{task.description}</span>
-              <span className="timer">{formatTime(task.remainingTime)}</span>
-              <button
-                className="icon icon-timer"
-                type="button"
-                onClick={this.handleTimerClick}
-                aria-label={task.isTimerRunning ? 'Pause timer' : 'Start timer'}
-              >
-                {task.isTimerRunning ? '⏸' : '▶'}
-              </button>
-              <span className="created">{task.createdText}</span>
-            </div>
-          </label>
-
-          <button
-            className="icon icon-edit"
-            type="button"
-            onClick={() => onToggleEdit(task.id)}
-            disabled={task.completed}
-            aria-label="Edit task"
-          />
-          <button className="icon icon-destroy" type="button" onClick={onDelete} aria-label="Delete task" />
-        </div>
-
-        {task.editing && (
-          <form onSubmit={this.handleEditSubmit}>
-            <input
-              type="text"
-              className="edit"
-              value={editText}
-              onChange={this.handleEditChange}
-              onBlur={this.handleEditSubmit}
-              onKeyDown={this.handleEditKeyDown}
-            />
-          </form>
-        )}
-      </li>
-    )
-  }
+        </form>
+      )}
+    </li>
+  )
 }
 
 Task.propTypes = {
@@ -127,3 +106,5 @@ Task.propTypes = {
   onStartTimer: PropTypes.func.isRequired,
   onStopTimer: PropTypes.func.isRequired,
 }
+
+export default Task

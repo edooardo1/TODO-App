@@ -1,100 +1,84 @@
+import React, { useEffect, useState, useRef } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import React, { Component } from 'react'
 
 import Footer from '../Footer/Footer'
 import NewTaskForm from '../NewTaskForm/NewTaskForm'
 import TaskList from '../TaskList/TaskList'
 import './app.css'
 
-class App extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      tasks: [],
-      filter: 'all',
-    }
-  }
+function App() {
+  const [tasks, setTasks] = useState([])
+  const [filterState, setFilterState] = useState('all')
+  const timerRef = useRef(null)
 
-  componentDidMount() {
-    this.timerID = setInterval(this.updateTimers, 1000)
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timerID)
-  }
-
-  updateTimers = () => {
-    this.setState((prevState) => ({
-      tasks: prevState.tasks.map((task) => {
+  const updateTimers = () => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
         if (task.isTimerRunning && task.remainingTime > 0) {
+          const newTime = task.remainingTime - 1
           return {
             ...task,
-            remainingTime: task.remainingTime - 1,
-            isTimerRunning: task.remainingTime - 1 > 0,
+            remainingTime: newTime,
+            isTimerRunning: newTime > 0,
           }
         }
         return task
-      }),
-    }))
+      })
+    )
   }
 
-  addTask = (description, duration) => {
+  useEffect(() => {
+    timerRef.current = setInterval(updateTimers, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [])
+
+  const addTask = (description, minutes, seconds) => {
+    const duration = parseInt(minutes || '0', 10) * 60 + parseInt(seconds || '0', 10)
+    if (!description.trim() || Number.isNaN(duration) || duration <= 0) return
+
     const newTask = {
       id: Date.now(),
-      description,
+      description: description.trim(),
       completed: false,
-      created: new Date(),
       editing: false,
+      created: new Date(),
+      createdText: 'just now',
       remainingTime: duration,
       isTimerRunning: false,
     }
-
-    this.setState((prev) => ({
-      tasks: [...prev.tasks, newTask],
-    }))
+    setTasks((prev) => [...prev, newTask])
   }
 
-  toggleTaskStatus = (taskId) => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)),
-    }))
+  const toggleTaskStatus = (id) => {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task)))
   }
 
-  deleteTask = (taskId) => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.filter((task) => task.id !== taskId),
-    }))
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id))
   }
 
-  editTask = (taskId, newDescription) => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.map((task) =>
-        task.id === taskId ? { ...task, description: newDescription, editing: false } : task
-      ),
-    }))
+  const editTask = (id, newDescription) => {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, description: newDescription, editing: false } : task)))
   }
 
-  toggleEditMode = (taskId) => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.map((task) =>
-        task.id === taskId ? { ...task, editing: !task.editing } : { ...task, editing: false }
-      ),
-    }))
+  const toggleEditMode = (id) => {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, editing: !task.editing } : { ...task, editing: false })))
   }
 
-  changeFilter = (filter) => {
-    this.setState({ filter })
+  const changeFilter = (newFilter) => setFilterState(newFilter)
+
+  const clearCompleted = () => setTasks(tasks.filter((task) => !task.completed))
+
+  const startTimer = (id) => {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, isTimerRunning: true } : task)))
   }
 
-  clearCompleted = () => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.filter((task) => !task.completed),
-    }))
+  const stopTimer = (id) => {
+    setTasks(tasks.map((task) => (task.id === id ? { ...task, isTimerRunning: false } : task)))
   }
 
-  getFilteredTasks = () => {
-    const { tasks, filter } = this.state
-    switch (filter) {
+  const getFilteredTasks = () => {
+    switch (filterState) {
       case 'active':
         return tasks.filter((task) => !task.completed)
       case 'completed':
@@ -104,56 +88,38 @@ class App extends Component {
     }
   }
 
-  getActiveTasksCount = () => {
-    return this.state.tasks.filter((task) => !task.completed).length
-  }
+  const activeTasksCount = tasks.filter((task) => !task.completed).length
 
-  startTimer = (taskId) => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, isTimerRunning: true } : task)),
-    }))
-  }
+  const filteredTasks = getFilteredTasks().map((task) => ({
+    ...task,
+    createdText: formatDistanceToNow(task.created, { addSuffix: true }),
+  }))
 
-  stopTimer = (taskId) => {
-    this.setState((prev) => ({
-      tasks: prev.tasks.map((task) => (task.id === taskId ? { ...task, isTimerRunning: false } : task)),
-    }))
-  }
-
-  render() {
-    const { filter } = this.state
-    const filteredTasks = this.getFilteredTasks().map((task) => ({
-      ...task,
-      createdText: formatDistanceToNow(task.created, { addSuffix: true }),
-    }))
-    const activeTasksCount = this.getActiveTasksCount()
-
-    return (
-      <section className="todoapp">
-        <header className="header">
-          <h1>todos</h1>
-          <NewTaskForm onAddTask={this.addTask} />
-        </header>
-        <section className="main">
-          <TaskList
-            tasks={filteredTasks}
-            onToggleTask={this.toggleTaskStatus}
-            onDeleteTask={this.deleteTask}
-            onEditTask={this.editTask}
-            onToggleEdit={this.toggleEditMode}
-            onStartTimer={this.startTimer}
-            onStopTimer={this.stopTimer}
-          />
-        </section>
-        <Footer
-          activeTasksCount={activeTasksCount}
-          currentFilter={filter}
-          onChangeFilter={this.changeFilter}
-          onClearCompleted={this.clearCompleted}
+  return (
+    <section className="todoapp">
+      <header className="header">
+        <h1>todos</h1>
+        <NewTaskForm onAddTask={addTask} />
+      </header>
+      <section className="main">
+        <TaskList
+          tasks={filteredTasks}
+          onToggleTask={toggleTaskStatus}
+          onDeleteTask={deleteTask}
+          onEditTask={editTask}
+          onToggleEdit={toggleEditMode}
+          onStartTimer={startTimer}
+          onStopTimer={stopTimer}
         />
       </section>
-    )
-  }
+      <Footer
+        activeTasksCount={activeTasksCount}
+        currentFilter={filterState}
+        onChangeFilter={changeFilter}
+        onClearCompleted={clearCompleted}
+      />
+    </section>
+  )
 }
 
 export default App
